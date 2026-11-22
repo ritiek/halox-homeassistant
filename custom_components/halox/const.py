@@ -8,11 +8,9 @@ ever supplies their own email + password.
 
 DOMAIN = "halox"
 
-# REST backend (AWS API Gateway) used by the official app.
-API_BASE = "https://8fhy9ntc6c.execute-api.ap-south-1.amazonaws.com/api/v1"
-
-# Realtime channel (Socket.IO v4) shares the same host.
-SOCKET_URL = "https://8fhy9ntc6c.execute-api.ap-south-1.amazonaws.com"
+# REST backend used by the official app (v5+). The earlier AWS API-Gateway
+# host (8fhy9ntc6c.execute-api.ap-south-1.amazonaws.com) is deprecated.
+API_BASE = "https://livsmart-origin.thelivsmart.com/api/v1"
 
 # Firebase project the app authenticates against (Google Identity Platform).
 # A Firebase Web API key is a public client identifier, not a secret.

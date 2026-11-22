@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.vscode/
+.idea/
+.DS_Store
+# never commit captured credentials or session data
+*.token
+token.json
+secrets.yaml

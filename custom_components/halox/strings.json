@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Halox Smart",
+        "description": "Sign in with the email and password you use in the Halox Smart app.",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password.",
+      "cannot_connect": "Failed to reach the Halox cloud."
+    },
+    "abort": {
+      "already_configured": "This Halox account is already configured."
+    }
+  }
+}

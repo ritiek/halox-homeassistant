@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import voluptuous as vol
@@ -11,6 +12,8 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import HaloxApi, HaloxApiError, HaloxAuthError
 from .const import CONF_REFRESH_TOKEN, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 STEP_USER_SCHEMA = vol.Schema(
     {
@@ -52,4 +55,22 @@ class HaloxConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_SCHEMA, errors=errors
+        )
+
+    async def async_step_import(
+        self, user_input: dict[str, Any]
+    ) -> ConfigFlowResult:
+        """Set up from YAML (`halox:` in configuration.yaml)."""
+        email = user_input[CONF_EMAIL].strip()
+        session = async_get_clientsession(self.hass)
+        try:
+            api = await HaloxApi.login(session, email, user_input[CONF_PASSWORD])
+        except (HaloxAuthError, HaloxApiError) as err:
+            _LOGGER.error("Halox YAML import login failed: %s", err)
+            return self.async_abort(reason="cannot_connect")
+        await self.async_set_unique_id(email.lower())
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(
+            title=email,
+            data={CONF_EMAIL: email, CONF_REFRESH_TOKEN: api.refresh_token},
         )

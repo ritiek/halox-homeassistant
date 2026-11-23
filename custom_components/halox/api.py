@@ -137,13 +137,7 @@ class HaloxApi:
         return devices
 
     async def set_state(self, device_id: str, on: bool) -> None:
-        """Turn a device on/off via the REST control endpoint.
-
-        The payload must be flat: {"device_id", "on"}. The nested
-        {"device_id", "state": {"on"}} form is also accepted (201) but
-        silently ignored by the vendor backend — verified against the
-        official Android app's actual request (captured via adb logcat).
-        """
+        """Turn a device on/off via the REST control endpoint."""
         await self._request(
             "POST", "/device/update_state", {"device_id": device_id, "on": on}
         )

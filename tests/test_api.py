@@ -80,8 +80,7 @@ async def _serve(requests_seen, make_requests):
 
 
 def test_set_state_posts_flat_payload():
-    """The control payload must be flat — the nested {"state": {"on"}} form is
-    accepted (201) but silently ignored by the vendor backend."""
+    """Pin the exact control request the integration sends."""
     seen = []
     asyncio.run(_serve(seen, lambda c: c.set_state("D1", False)))
     assert seen == [

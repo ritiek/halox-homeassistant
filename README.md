@@ -45,11 +45,6 @@ The Halox app is a thin client over a public cloud API:
 - A Socket.IO channel pushes realtime state changes (this integration polls
   instead — simpler, and just as fresh).
 
-One vendor quirk worth knowing: the control payload must be **flat** —
-`{"device_id": ..., "on": true}`. The backend also accepts a nested
-`{"device_id": ..., "state": {"on": ...}}` form with HTTP 201 but silently
-ignores it, which is easy to trip over when reverse-engineering the API.
-
 Commands are relayed through the vendor's cloud, so a change needs the vendor
 backend (and the device's connection to it) to be healthy — the same
 dependency the official app has.

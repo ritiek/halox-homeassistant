@@ -44,15 +44,6 @@ The integration signs in through Firebase (the vendor's auth provider), stores
 only the resulting refresh token in your Home Assistant config entry, and
 refreshes the short-lived access token automatically.
 
-## Setup
-
-Settings → Devices & Services → **Add Integration** → **Halox Smart**, then enter
-the **email and password** you use in the Halox Smart app. That's it.
-
-The integration signs in through Firebase (the vendor's auth provider), stores
-only the resulting refresh token in your Home Assistant config entry, and
-refreshes the short-lived access token automatically.
-
 ## How it works
 
 The Halox app is a thin client over a public cloud API:

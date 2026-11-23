@@ -18,6 +18,10 @@ to flash and no hardware to open** — you just sign in with your Halox account.
 
 ### HACS (recommended)
 
+[![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ritiek&repository=halox-homeassistant&category=integration)
+
+Or manually:
+
 1. In HACS, add this repository as a *custom repository* (type: *Integration*).
 2. Install **Halox Smart**, then restart Home Assistant.
 

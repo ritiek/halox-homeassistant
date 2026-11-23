@@ -27,7 +27,7 @@ async def async_setup_entry(
     @callback
     def _add_new_entities() -> None:
         new_ids = set(coordinator.data) - known
-        known |= new_ids
+        known.update(new_ids)
         async_add_entities(HaloxSwitch(coordinator, dev) for dev in new_ids)
 
     _add_new_entities()

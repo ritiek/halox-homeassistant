@@ -20,11 +20,18 @@ async def async_setup_entry(
     entry: HaloxConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Halox switches from a config entry."""
+    """Set up Halox switches; also catches devices discovered by later polls."""
     coordinator = entry.runtime_data
-    async_add_entities(
-        HaloxSwitch(coordinator, device_id) for device_id in coordinator.data
-    )
+    known: set[str] = set()
+
+    @callback
+    def _add_new_entities() -> None:
+        new_ids = set(coordinator.data) - known
+        known |= new_ids
+        async_add_entities(HaloxSwitch(coordinator, dev) for dev in new_ids)
+
+    _add_new_entities()
+    entry.async_on_unload(coordinator.async_add_listener(_add_new_entities))
 
 
 class HaloxSwitch(CoordinatorEntity[HaloxCoordinator], SwitchEntity):

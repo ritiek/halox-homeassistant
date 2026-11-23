@@ -111,19 +111,15 @@ class HaloxApi:
             return body.get("data")
         return body
 
-    async def get_homes(self) -> list[dict]:
-        """Return the account's homes."""
-        return await self._request("GET", "/home/all") or []
-
-    async def get_boards(self, home_id: str) -> list[dict]:
-        """Return the boards (and their devices) in a home."""
-        return await self._request("POST", "/board/all", {"home_id": home_id}) or []
-
     async def get_devices(self) -> list[dict]:
         """Flatten every controllable device across all homes."""
         devices: list[dict] = []
-        for home in await self.get_homes():
-            for board in await self.get_boards(home["_id"]):
+        homes = await self._request("GET", "/home/all") or []
+        for home in homes:
+            boards = await self._request(
+                "POST", "/board/all", {"home_id": home["_id"]}
+            ) or []
+            for board in boards:
                 for dev in board.get("devices", []):
                     devices.append(
                         {

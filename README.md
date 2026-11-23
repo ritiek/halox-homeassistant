@@ -16,19 +16,33 @@ to flash and no hardware to open** — you just sign in with your Halox account.
 
 ## Installation
 
-### HACS (recommended)
-
 [![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ritiek&repository=halox-homeassistant&category=integration)
 
-Or manually:
+**One-click path** — the button above opens this repository directly in your
+Home Assistant's marketplace page. Just press **Download this repository**, then
+restart Home Assistant. The button needs [HACS](https://www.hacs.xyz/docs/use/download/download/)
+— the *Home Assistant Community Store*, the standard marketplace for community
+integrations — plus My Home Assistant enabled (Settings → My Home Assistant).
+If you don't have HACS yet, [the official setup guide](https://www.hacs.xyz/docs/use/download/download/)
+takes about ten minutes, or skip it entirely:
 
-1. In HACS, add this repository as a *custom repository* (type: *Integration*).
-2. Install **Halox Smart**, then restart Home Assistant.
+1. Download [the integration as a zip](https://github.com/ritiek/halox-homeassistant/archive/refs/heads/main.zip) and unzip it.
+2. Copy the `custom_components/halox` folder into the `custom_components`
+   folder of your Home Assistant configuration directory (create the folder if
+   it doesn't exist).
+3. Restart Home Assistant.
 
-### Manual
+## Setup
 
-Copy `custom_components/halox` into your Home Assistant `config/custom_components/`
-directory and restart.
+[![Add Integration to your Home Assistant instance.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=halox)
+
+Or the classic way: **Settings → Devices & Services → Add Integration**, search
+for **Halox Smart**, then enter the **email and password** you use in the Halox
+Smart app. That's it.
+
+The integration signs in through Firebase (the vendor's auth provider), stores
+only the resulting refresh token in your Home Assistant config entry, and
+refreshes the short-lived access token automatically.
 
 ## Setup
 

@@ -12,6 +12,8 @@ to flash and no hardware to open** — you just sign in with your Halox account.
 
 - Automatic discovery of every switch/plug across all your homes and rooms.
 - On/off control and live state, device online status, and firmware version.
+- Realtime updates over the vendor's cloud event stream, with polling as a
+  fallback when the stream is down.
 - Simple email + password setup — no tokens, developer accounts or cloud keys.
 
 ## Installation
@@ -95,8 +97,9 @@ The Halox app is a thin client over a public cloud API:
 - Auth: Firebase email/password sign-in → `Bearer` ID token.
 - REST backend (AWS) for discovery, state and control
   (`/home/all`, `/board/all`, `POST /device/update_state`).
-- A Socket.IO channel pushes realtime state changes (this integration polls
-  instead — simpler, and just as fresh).
+- A Socket.IO channel pushes realtime `stateUpdate` / `onlineStatusUpdate`
+  events; the integration keeps that stream open and falls back to REST
+  polling (every 30s while it is down, every 5min while connected).
 
 Commands are relayed through the vendor's cloud, so a change needs the vendor
 backend (and the device's connection to it) to be healthy — the same

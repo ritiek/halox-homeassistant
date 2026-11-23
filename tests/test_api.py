@@ -36,6 +36,7 @@ def _load_module(name: str):
 
 
 api = _load_module("api")
+events = _load_module("events")
 
 
 async def _serve(requests_seen, make_requests):
@@ -102,3 +103,37 @@ def test_get_devices_flattens_homes_boards_devices():
         "type": "switch", "home_id": "H1", "firmware": "4.0.4",
     }]
     assert ("POST", "/api/v1/board/all", {"home_id": "H1"}, "Bearer test-token") in seen
+
+
+def test_parse_events_reads_pushed_state_and_presence():
+    """Full event payloads captured from the vendor's live socket."""
+    payload = (
+        '42["stateUpdate",{"device_id":"A024420B21E20","type":"switch",'
+        '"state":{"on":false}}]'
+        "\x1e"
+        '42["onlineStatusUpdate",{"client_id":"A024420B21E2","online":true}]'
+    )
+    assert events.parse_events(payload) == [
+        ("stateUpdate", {
+            "device_id": "A024420B21E20", "type": "switch",
+            "state": {"on": False},
+        }),
+        ("onlineStatusUpdate", {"client_id": "A024420B21E2", "online": True}),
+    ]
+
+
+def test_parse_events_ignores_heartbeat_and_malformed_packets():
+    assert events.parse_events('2\x1e40{"sid":"x"}\x1e42[bad') == []
+
+
+def test_token_user_id_reads_firebase_uid():
+    """The socket header wants the Firebase UID from the ID token's payload."""
+    import base64
+    import json
+
+    def b64(obj):
+        raw = json.dumps(obj).encode()
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    token = f"{b64({'alg': 'none'})}.{b64({'user_id': 'uid-123'})}.sig"
+    assert events.token_user_id(token) == "uid-123"

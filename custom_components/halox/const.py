@@ -12,6 +12,11 @@ DOMAIN = "halox"
 # host (8fhy9ntc6c.execute-api.ap-south-1.amazonaws.com) is deprecated.
 API_BASE = "https://livsmart-origin.thelivsmart.com/api/v1"
 
+# Socket.IO endpoint on the same backend (no /api/v1 prefix). The Android app
+# still points at an old EC2 host that now returns 404, so it only refreshes on
+# a cold start; this host serves the working event stream.
+SOCKET_URL = "https://livsmart-origin.thelivsmart.com/socket.io/"
+
 # Firebase project the app authenticates against (Google Identity Platform).
 # A Firebase Web API key is a public client identifier, not a secret.
 FIREBASE_API_KEY = "AIzaSyDB5hEoRXDXlZhtnITfNLw2DdNBCMnucLM"
@@ -23,4 +28,5 @@ SECURETOKEN_URL = "https://securetoken.googleapis.com/v1/token"
 # Config entry keys
 CONF_REFRESH_TOKEN = "refresh_token"
 
-DEFAULT_SCAN_INTERVAL = 30  # seconds
+DEFAULT_SCAN_INTERVAL = 30  # seconds, used while the live event stream is down
+SOCKET_SCAN_INTERVAL = 300  # seconds, slow fallback while the event stream is up

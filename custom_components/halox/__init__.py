@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import uuid
+
 import voluptuous as vol
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
@@ -13,6 +16,7 @@ from homeassistant.helpers.typing import ConfigType
 from .api import HaloxApi
 from .const import CONF_REFRESH_TOKEN, DOMAIN
 from .coordinator import HaloxCoordinator
+from .events import HaloxSocket
 
 PLATFORMS: list[Platform] = [Platform.SWITCH]
 
@@ -52,9 +56,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: HaloxConfigEntry) -> boo
     entry.runtime_data = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # One live event stream per home; REST polling stays as a slow fallback.
+    device_id = str(uuid.uuid5(uuid.NAMESPACE_URL, entry.entry_id))
+    home_ids = {dev["home_id"] for dev in coordinator.data.values()}
+    coordinator.sockets = [
+        HaloxSocket(
+            session,
+            api,
+            home_id,
+            device_id,
+            coordinator.async_handle_event,
+            coordinator.set_socket_connected,
+        )
+        for home_id in home_ids
+    ]
+    for sock in coordinator.sockets:
+        await sock.async_start()
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HaloxConfigEntry) -> bool:
     """Unload a config entry."""
+    coordinator = entry.runtime_data
+    await asyncio.gather(*(sock.async_stop() for sock in coordinator.sockets))
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

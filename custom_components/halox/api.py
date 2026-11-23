@@ -68,6 +68,12 @@ class HaloxApi:
         """Current refresh token (persisted in the config entry)."""
         return self._refresh_token
 
+    async def async_get_access_token(self) -> str:
+        """Return a valid ID token for the event stream headers."""
+        await self._ensure_token()
+        assert self._access_token is not None
+        return self._access_token
+
     async def _ensure_token(self) -> None:
         if self._access_token and time.time() < self._expiry:
             return

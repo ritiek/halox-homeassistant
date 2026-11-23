@@ -40,16 +40,19 @@ refreshes the short-lived access token automatically.
 The Halox app is a thin client over a public cloud API:
 
 - Auth: Firebase email/password sign-in → `Bearer` ID token.
-- REST backend (AWS API Gateway) for discovery and state
-  (`/home/all`, `/board/all`, …).
-- A Socket.IO channel for realtime updates and power control.
+- REST backend (AWS) for discovery, state and control
+  (`/home/all`, `/board/all`, `POST /device/update_state`).
+- A Socket.IO channel pushes realtime state changes (this integration polls
+  instead — simpler, and just as fresh).
 
-This integration polls the REST backend for state (reflected within a couple of
-seconds of any change) and sends on/off via `POST /device/update_state`.
+One vendor quirk worth knowing: the control payload must be **flat** —
+`{"device_id": ..., "on": true}`. The backend also accepts a nested
+`{"device_id": ..., "state": {"on": ...}}` form with HTTP 201 but silently
+ignores it, which is easy to trip over when reverse-engineering the API.
 
-A device must be online (reachable by the Halox cloud) for a power change to
-physically take effect; if the vendor's realtime backend is down, devices report
-offline and commands won't actuate — the same limitation the official app has.
+Commands are relayed through the vendor's cloud, so a change needs the vendor
+backend (and the device's connection to it) to be healthy — the same
+dependency the official app has.
 
 ## Disclaimer
 

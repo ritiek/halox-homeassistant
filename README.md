@@ -32,6 +32,50 @@ takes about ten minutes, or skip it entirely:
    it doesn't exist).
 3. Restart Home Assistant.
 
+### NixOS
+
+Two NixOS gotchas: `services.home-assistant` rewrites `configuration.yaml`
+from the NixOS config on every restart when `configWritable = true` (so a
+manually appended `halox:` line is wiped), and the component should come from
+a store path rather than files copied into `/var/lib/hass`. This installs the
+release declaratively and keeps credentials out-of-band, only ever in
+`/var/lib/hass/halox.yaml`:
+
+```nix
+let
+  halox = pkgs.fetchFromGitHub {
+    owner = "ritiek";
+    repo = "halox-homeassistant";
+    rev = "v0.1.0";
+    hash = "sha256-163gplir6rh87ilrir6r3hp4ivslil3pycbpgb14d3qyhqhygbpk";
+  };
+in {
+  systemd.services.home-assistant.serviceConfig.ExecStartPre = [
+    # install (or refresh) the component from the store
+    ("+${pkgs.writeShellScript "install-halox" ''
+      DST=/var/lib/hass/custom_components/halox
+      if [ ! -f "$DST/.nix-src" ] || [ "$(cat $DST/.nix-src)" != "${halox}" ]; then
+        rm -rf "$DST"
+        cp -r ${halox}/custom_components/halox "$DST"
+        echo "${halox}" > "$DST/.nix-src"
+        chown -R hass:hass "$DST"
+      fi
+    ''}")
+    # add the include once credentials exist (never in the store)
+    ("+${pkgs.writeShellScript "halox-include" ''
+      sleep 2
+      if [ -f /var/lib/hass/halox.yaml ] && ! grep -q "^halox:" /var/lib/hass/configuration.yaml; then
+        printf '\nhalox: !include halox.yaml\n' >> /var/lib/hass/configuration.yaml
+        chown hass:hass /var/lib/hass/configuration.yaml
+      fi
+    ''}")
+  ];
+}
+```
+
+`/var/lib/hass/halox.yaml` holds just `email:` and `password:` (the Halox
+Smart app login), owned by `hass:hass` with mode 0600.
+
 ## Setup
 
 [![Add Integration to your Home Assistant instance.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=halox)

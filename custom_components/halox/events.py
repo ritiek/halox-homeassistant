@@ -18,6 +18,7 @@ import asyncio
 import base64
 import json
 import logging
+import time
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
 
@@ -52,11 +53,20 @@ def parse_events(payload: str) -> list[tuple[str, dict]]:
     return events
 
 
-def token_user_id(token: str) -> str:
-    """Read the Firebase UID from an ID token without re-verifying it."""
+def _token_payload(token: str) -> dict:
     payload = token.split(".")[1]
     payload += "=" * (-len(payload) % 4)
-    return json.loads(base64.urlsafe_b64decode(payload))["user_id"]
+    return json.loads(base64.urlsafe_b64decode(payload))
+
+
+def token_user_id(token: str) -> str:
+    """Read the Firebase UID from an ID token without re-verifying it."""
+    return _token_payload(token)["user_id"]
+
+
+def token_expiry(token: str) -> int:
+    """Unix expiry of the ID token, used to reconnect before it goes stale."""
+    return int(_token_payload(token)["exp"])
 
 
 class HaloxSocket:
@@ -78,6 +88,7 @@ class HaloxSocket:
         self._on_event = on_event
         self._on_connection = on_connection
         self._task: asyncio.Task | None = None
+        self._force_token = False
 
     async def async_start(self) -> None:
         """Start the background listener; connection happens asynchronously."""
@@ -107,7 +118,9 @@ class HaloxSocket:
             backoff = min(backoff * 2, _RECONNECT_MAX)
 
     async def _listen(self) -> None:
-        token = await self._api.async_get_access_token()
+        token = await self._api.async_get_access_token(force=self._force_token)
+        self._force_token = False
+        expiry = token_expiry(token)
         headers = {
             "token": f"Bearer {token}",
             "user-id": token_user_id(token),
@@ -128,12 +141,19 @@ class HaloxSocket:
                             self._on_connection(True)
                             _LOGGER.debug("Halox event stream connected")
                     elif packet.startswith("42"):
+                        if packet.startswith('42["AUTH_FAILED"'):
+                            # The server keeps pinging but stops sending state,
+                            # so force a token refresh on the next attempt.
+                            self._force_token = True
+                            raise ConnectionError("event stream auth failed")
                         for event, data in parse_events(packet):
                             await self._on_event(event, data)
                     elif packet.startswith("41") or packet == "1":
                         raise ConnectionError("server closed the event stream")
                     elif packet.startswith("44"):
                         raise ConnectionError(packet)
+                if time.time() >= expiry:
+                    raise ConnectionError("access token expired")
         finally:
             if connected:
                 self._on_connection(False)

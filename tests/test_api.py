@@ -135,5 +135,6 @@ def test_token_user_id_reads_firebase_uid():
         raw = json.dumps(obj).encode()
         return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
 
-    token = f"{b64({'alg': 'none'})}.{b64({'user_id': 'uid-123'})}.sig"
+    token = f"{b64({'alg': 'none'})}.{b64({'user_id': 'uid-123', 'exp': 1234567890})}.sig"
     assert events.token_user_id(token) == "uid-123"
+    assert events.token_expiry(token) == 1234567890

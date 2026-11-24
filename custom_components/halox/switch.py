@@ -75,11 +75,7 @@ class HaloxSwitch(CoordinatorEntity[HaloxCoordinator], SwitchEntity):
         await self._set(False)
 
     async def _set(self, on: bool) -> None:
-        await self.coordinator.api.set_state(self._device_id, on)
-        # Optimistic update until the next poll confirms.
-        self._device["is_on"] = on
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_set_state(self._device_id, on)
 
     @callback
     def _handle_coordinator_update(self) -> None:

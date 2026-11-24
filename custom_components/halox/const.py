@@ -30,3 +30,6 @@ CONF_REFRESH_TOKEN = "refresh_token"
 
 DEFAULT_SCAN_INTERVAL = 30  # seconds, used while the live event stream is down
 SOCKET_SCAN_INTERVAL = 300  # seconds, slow fallback while the event stream is up
+# The REST backend keeps reporting the old state until the device acks a
+# command (~1-2s), so polls inside this window can't undo a command.
+COMMAND_GRACE = 10  # seconds

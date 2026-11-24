@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
@@ -10,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import HaloxApi, HaloxApiError, HaloxAuthError
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, SOCKET_SCAN_INTERVAL
+from .const import COMMAND_GRACE, DEFAULT_SCAN_INTERVAL, DOMAIN, SOCKET_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,6 +30,16 @@ class HaloxCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         self.entry = entry
         self.sockets: list = []
         self._live_sockets = 0
+        # device_id -> (is_on, monotonic deadline) for recently commanded devices
+        self._commanded: dict[str, tuple[bool, float]] = {}
+
+    async def async_set_state(self, device_id: str, on: bool) -> None:
+        """Send a command and show it right away; pushes confirm it."""
+        await self.api.set_state(device_id, on)
+        self._commanded[device_id] = (on, time.monotonic() + COMMAND_GRACE)
+        if device := self.data.get(device_id):
+            device["is_on"] = on
+        self.async_set_updated_data(self.data)
 
     def set_socket_connected(self, connected: bool) -> None:
         """Slow the REST fallback while a live event stream is up."""
@@ -42,9 +53,15 @@ class HaloxCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         if not self.data:
             return
         if event == "stateUpdate":
-            device = self.data.get(data.get("device_id"))
+            device_id = data.get("device_id")
+            device = self.data.get(device_id)
             on = data.get("state", {}).get("on")
-            if device is None or on is None or device.get("is_on") == bool(on):
+            if device is None or on is None:
+                return
+            # The device itself reported this, so it is newer than any command.
+            if device_id in self._commanded:
+                self._commanded[device_id] = (bool(on), self._commanded[device_id][1])
+            if device.get("is_on") == bool(on):
                 return
             device["is_on"] = bool(on)
             self.async_set_updated_data(self.data)
@@ -78,4 +95,11 @@ class HaloxCoordinator(DataUpdateCoordinator[dict[str, dict]]):
                 self.entry,
                 data={**self.entry.data, "refresh_token": self.api.refresh_token},
             )
-        return {dev["device_id"]: dev for dev in devices}
+        result = {dev["device_id"]: dev for dev in devices}
+        now = time.monotonic()
+        for device_id, (on, deadline) in list(self._commanded.items()):
+            if now >= deadline:
+                del self._commanded[device_id]
+            elif device_id in result:
+                result[device_id]["is_on"] = on
+        return result

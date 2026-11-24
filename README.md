@@ -48,7 +48,7 @@ let
   halox = pkgs.fetchFromGitHub {
     owner = "ritiek";
     repo = "halox-homeassistant";
-    rev = "v0.2.2";
+    rev = "v0.2.3";
     hash = "sha256-mvxCN6socBh+zv0ZJRcs6LQpUF7R3DWxSnc2ajdfSPQ=";
   };
 in {

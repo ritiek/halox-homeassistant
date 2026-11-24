@@ -48,8 +48,8 @@ let
   halox = pkgs.fetchFromGitHub {
     owner = "ritiek";
     repo = "halox-homeassistant";
-    rev = "v0.2.1";
-    hash = "sha256-7xDAyDH9hO/VtCGy6wmcpnzHtBGOPZdpAKC3vG1FjfU=";
+    rev = "v0.2.2";
+    hash = "sha256-mvxCN6socBh+zv0ZJRcs6LQpUF7R3DWxSnc2ajdfSPQ=";
   };
 in {
   systemd.services.home-assistant.serviceConfig.ExecStartPre = [

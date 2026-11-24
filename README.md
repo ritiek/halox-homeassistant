@@ -90,6 +90,21 @@ The integration signs in through Firebase (the vendor's auth provider), stores
 only the resulting refresh token in your Home Assistant config entry, and
 refreshes the short-lived access token automatically.
 
+### Tile card tap behavior
+
+A `tile` card toggles the switch when its text is tapped by default. To toggle
+from the icon instead and open the more-info dialog from the text, set both
+actions on the card:
+
+```yaml
+type: tile
+entity: switch.your_halox_switch
+tap_action:
+  action: more-info
+icon_tap_action:
+  action: toggle
+```
+
 ## How it works
 
 The Halox app is a thin client over a public cloud API:
